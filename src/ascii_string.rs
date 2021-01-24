@@ -15,6 +15,8 @@ use std::ffi::{CStr, CString};
 
 use ascii_char::AsciiChar;
 use ascii_str::{AsAsciiStr, AsAsciiStrError, AsciiStr};
+use std::rc::Rc;
+use std::sync::Arc;
 
 /// A growable string stored as an ASCII encoded buffer.
 #[derive(Clone, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -474,6 +476,12 @@ impl Into<Vec<u8>> for AsciiString {
     }
 }
 
+impl Into<Vec<AsciiChar>> for AsciiString {
+    fn into(self) -> Vec<AsciiChar> {
+        self.vec
+    }
+}
+
 impl<'a> From<&'a AsciiStr> for AsciiString {
     #[inline]
     fn from(s: &'a AsciiStr) -> Self {
@@ -493,6 +501,22 @@ impl Into<String> for AsciiString {
     fn into(self) -> String {
         // SAFETY: All ascii bytes are `utf8`.
         unsafe { String::from_utf8_unchecked(self.into()) }
+    }
+}
+
+impl Into<Rc<AsciiStr>> for AsciiString {
+    fn into(self) -> Rc<AsciiStr> {
+        let var: Rc<[AsciiChar]> = self.vec.into();
+        // SAFETY: AsciiStr is repr(transparent) and thus has the same layout as [AsciiChar]
+        unsafe { Rc::from_raw(Rc::into_raw(var) as *const AsciiStr) }
+    }
+}
+
+impl Into<Arc<AsciiStr>> for AsciiString {
+    fn into(self) -> Arc<AsciiStr> {
+        let var: Arc<[AsciiChar]> = self.vec.into();
+        // SAFETY: AsciiStr is repr(transparent) and thus has the same layout as [AsciiChar]
+        unsafe { Arc::from_raw(Arc::into_raw(var) as *const AsciiStr) }
     }
 }
 
