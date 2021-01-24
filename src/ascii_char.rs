@@ -3,6 +3,7 @@ use core::mem;
 use core::{char, fmt};
 #[cfg(feature = "std")]
 use std::error::Error;
+use std::str::pattern::{Pattern, Searcher, SearchStep, CharSearcher};
 
 #[allow(non_camel_case_types)]
 /// An ASCII character. It wraps a `u8`, with the highest bit always zero.
@@ -935,6 +936,14 @@ impl ToAsciiChar for u16 {
         unsafe {
             (self as u8).to_ascii_char_unchecked()
         }
+    }
+}
+
+impl<'a> Pattern<'a> for AsciiChar {
+    type Searcher = CharSearcher<'a>;
+
+    fn into_searcher(self, haystack: &'a str) -> Self::Searcher {
+        self.as_char().into_searcher(haystack)
     }
 }
 
